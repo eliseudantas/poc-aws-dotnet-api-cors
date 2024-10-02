@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>CORS Tester</title>
+	<script src="config.js"></script>
+</head>
+<body>
+	<h1>CORS Tester</h1>
+	<div >
+		<input style="width: 500px;" type="text" id="urlInput" placeholder="Enter URL" />
+		<select id="methodSelect">
+			<option value="GET">GET</option>
+			<option value="POST">POST</option>
+			<option value="PUT">PUT</option>
+			<option value="DELETE">DELETE</option>
+		</select>
+		<button onclick="testUrl()">Test URL</button>
+		</div>
+	<div >
+		<textarea id="payloadInput" placeholder="Enter payload (for POST/PUT requests)" style="width: 700px; min-height: 100px;"></textarea>
+	</div>
+	<div id="result" ></div>
+	
+</body>
+</html>
+<style>
+	body {
+		font-family: Arial, sans-serif;
+	}
+	input, select, button, textarea {
+		margin: 5px;
+		padding: 5px;
+	}
+	button {
+		cursor: pointer;
+	}
+	textarea {
+		font-family: monospace;
+	}
+	#result {
+		margin-top: 10px;
+		padding: 10px;
+		border: 1px solid #ccc;
+	}
+</style>
+<script>
+
+	document.addEventListener('DOMContentLoaded', () => {
+		document.getElementById('urlInput').value = window.API_URL || '';
+	});
+	async function testUrl() {
+		const url = document.getElementById('urlInput').value;
+		const method = document.getElementById('methodSelect').value;
+
+		try {
+
+			let options = { method: method };
+
+			if (method === 'POST' || method === 'PUT') {
+				const payload = document.getElementById('payloadInput').value;
+				options.body = payload;
+				options.headers = {
+					'Content-Type': 'application/json'
+				};
+			}
+
+			const response = await fetch(url, options);
+
+			if (!response.ok) {
+				throw new Error('Network response was not ok');
+			}
+
+			const contentType = response.headers.get('content-type');
+			let data;
+			if (contentType && contentType.includes('application/json')) {
+				data = await response.json();
+			} else {
+				data = await response.text();
+			}
+
+			console.log('data:', data);
+			document.getElementById('result').innerText = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+		} catch (error) {
+			if (error.message === 'Failed to fetch') {
+				document.getElementById('result').innerText = 'CORS issue or network error';
+			} else {
+				document.getElementById('result').innerText = 'Error: ' + error.message;
+			}
+			console.log('Error:', error);
+		}
+	}
+</script>
